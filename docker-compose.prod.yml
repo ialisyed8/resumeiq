@@ -1,0 +1,97 @@
+# Production stack. Differences from development:
+#   - no source bind mounts, no reload
+#   - nginx terminates TLS and is the only exposed service
+#   - data stores are not published to the host
+#   - containers run read-only where possible with a non-root user
+#
+# Secrets come from the environment or a secrets manager. Nothing is baked in.
+
+name: resumeiq-prod
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes: ["redis-data:/data"]
+    restart: unless-stopped
+
+  backend:
+    build: {context: ./backend, dockerfile: Dockerfile}
+    env_file: [.env]
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+      LOG_FORMAT: json
+      COOKIE_SECURE: "true"
+    depends_on:
+      postgres: {condition: service_healthy}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    command: >
+      sh -c "alembic upgrade head &&
+             gunicorn app.main:app -k uvicorn.workers.UvicornWorker
+             -w 4 -b 0.0.0.0:8000 --timeout 120 --access-logfile -"
+
+  worker:
+    build: {context: ./backend, dockerfile: Dockerfile}
+    env_file: [.env]
+    environment:
+      APP_ENV: production
+      LOG_FORMAT: json
+    depends_on:
+      postgres: {condition: service_healthy}
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    volumes: ["model-cache:/home/app/.cache"]
+    deploy:
+      replicas: 2
+    command: arq app.workers.main.WorkerSettings
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/certs:/etc/nginx/certs:ro
+    depends_on: [backend, frontend]
+    restart: unless-stopped
+
+  clamav:
+    image: clamav/clamav:1.4
+    # Signature database is ~1 GB and downloads on first start; the volume keeps
+    # it between restarts. Expect ~3 minutes before the first scan succeeds.
+    volumes: ["clamav-db:/var/lib/clamav"]
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --ping 1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+
+volumes:
+  clamav-db:
+  postgres-data:
+  redis-data:
+  model-cache:

@@ -1,0 +1,46 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+dist/
+build/
+
+# Node
+node_modules/
+frontend/dist/
+.vite/
+*.tsbuildinfo
+
+# Data — resumes are PII and must never enter version control
+uploads/
+storage/
+*.pdf
+*.docx
+*.doc
+!docs/**/*.pdf
+
+# Local infrastructure
+postgres-data/
+minio-data/
+redis-data/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+*.swp

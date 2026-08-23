@@ -1,0 +1,53 @@
+/* React-specific additions layered on top of tokens.css.
+   Kept separate so the ported design system stays pristine. */
+
+@import './tokens.css';
+
+#root { min-height: 100vh; }
+
+/* Router transitions reuse the prototype's page entrance. */
+.route-enter { animation: rise .3s var(--ease) both; }
+
+/* Focus ring for keyboard users on interactive table rows. */
+tr[tabindex]:focus-visible,
+.cand-card[tabindex]:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+/* React Query background-refetch indicator — deliberately quiet. */
+.refetching { opacity: .72; transition: opacity var(--dur) var(--ease); }
+
+/* Virtualised table container for very large candidate pools. */
+.virtual-scroll { max-height: 72vh; overflow-y: auto; }
+
+/* Screen-reader-only live region for async status announcements. */
+.sr-live {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* Comparison matrix cell states.
+   The only class not present in the ported prototype — the prototype's compare
+   view used a different markup shape. Colours reference existing tokens so the
+   palette stays consistent. */
+.cmp-cell {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--ui); font-size: 12.5px; font-weight: 600;
+  padding: 4px 9px; border-radius: var(--r-sm);
+  border: 1px solid transparent; white-space: nowrap;
+}
+.cmp-cell::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; flex: none;
+}
+.cmp-cell.met     { color: var(--green); background: var(--green-lo); border-color: var(--green-line); }
+.cmp-cell.partial { color: var(--amber); background: var(--amber-lo); border-color: var(--amber-line); }
+.cmp-cell.not_met { color: var(--ink-3); background: var(--bg-2); border-color: var(--line); }
+
+/* Comparison table keeps the requirement column visible while scrolling. */
+.tbl.cmp th:first-child,
+.tbl.cmp td:first-child {
+  position: sticky; left: 0; background: var(--surface); z-index: 1;
+  border-right: 1px solid var(--line);
+}

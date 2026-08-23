@@ -1,0 +1,308 @@
+{
+  "job_title": "Senior Frontend Engineer",
+  "description": "Fixture pool for ranking regression. Labels are the intended recruiter judgement.",
+  "requirements": [
+    {
+      "id": "react",
+      "text": "React, 5+ years production",
+      "necessity": "must_have",
+      "weight": "High"
+    },
+    {
+      "id": "ts",
+      "text": "TypeScript",
+      "necessity": "must_have",
+      "weight": "High"
+    },
+    {
+      "id": "exp",
+      "text": "5+ years frontend engineering",
+      "necessity": "must_have",
+      "weight": "High"
+    },
+    {
+      "id": "gql",
+      "text": "GraphQL",
+      "necessity": "must_have",
+      "weight": "Medium"
+    },
+    {
+      "id": "a11y",
+      "text": "Accessibility (WCAG 2.1 AA)",
+      "necessity": "must_have",
+      "weight": "High"
+    },
+    {
+      "id": "test",
+      "text": "Testing (unit + E2E)",
+      "necessity": "must_have",
+      "weight": "Medium"
+    },
+    {
+      "id": "ds",
+      "text": "Design systems ownership",
+      "necessity": "must_have",
+      "weight": "Medium"
+    },
+    {
+      "id": "perf",
+      "text": "Performance at scale",
+      "necessity": "must_have",
+      "weight": "Medium"
+    },
+    {
+      "id": "lead",
+      "text": "Mentoring or leading engineers",
+      "necessity": "must_have",
+      "weight": "Low"
+    },
+    {
+      "id": "aws",
+      "text": "AWS",
+      "necessity": "nice_to_have",
+      "weight": "Medium"
+    },
+    {
+      "id": "docker",
+      "text": "Docker",
+      "necessity": "nice_to_have",
+      "weight": "Low"
+    },
+    {
+      "id": "next",
+      "text": "Next.js",
+      "necessity": "nice_to_have",
+      "weight": "Medium"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "sarah_chen",
+      "label": "strong",
+      "note": "All must-haves with duration and outcomes",
+      "evidence": {
+        "react": "direct_with_context",
+        "ts": "direct_with_context",
+        "exp": "direct_with_context",
+        "gql": "direct_with_context",
+        "a11y": "direct_with_context",
+        "test": "direct_with_context",
+        "ds": "direct_with_context",
+        "perf": "direct_with_context",
+        "lead": "direct",
+        "aws": "skills_list",
+        "docker": "skills_list",
+        "next": "direct"
+      }
+    },
+    {
+      "id": "amara_okafor",
+      "label": "strong",
+      "note": "All must-haves, staff level",
+      "evidence": {
+        "react": "direct_with_context",
+        "ts": "direct_with_context",
+        "exp": "direct_with_context",
+        "gql": "direct_with_context",
+        "a11y": "direct_with_context",
+        "test": "direct_with_context",
+        "ds": "direct_with_context",
+        "perf": "direct",
+        "lead": "direct_with_context",
+        "aws": "skills_list",
+        "docker": "skills_list",
+        "next": "none"
+      }
+    },
+    {
+      "id": "adjacent_vocab",
+      "label": "strong",
+      "note": "Qualified; resume uses different terminology",
+      "evidence": {
+        "react": "direct",
+        "ts": "direct",
+        "exp": "direct_with_context",
+        "gql": "direct",
+        "a11y": "direct",
+        "test": "direct",
+        "ds": "direct",
+        "perf": "direct",
+        "lead": "direct",
+        "aws": "none",
+        "docker": "none",
+        "next": "none"
+      }
+    },
+    {
+      "id": "marcus_reed",
+      "label": "possible",
+      "note": "Missing accessibility evidence",
+      "evidence": {
+        "react": "direct_with_context",
+        "ts": "direct_with_context",
+        "exp": "direct_with_context",
+        "gql": "skills_list",
+        "a11y": "none",
+        "test": "direct_with_context",
+        "ds": "direct_with_context",
+        "perf": "direct_with_context",
+        "lead": "direct",
+        "aws": "none",
+        "docker": "none",
+        "next": "direct"
+      }
+    },
+    {
+      "id": "priya_kumar",
+      "label": "possible",
+      "note": "Missing leadership evidence",
+      "evidence": {
+        "react": "direct_with_context",
+        "ts": "direct_with_context",
+        "exp": "direct_with_context",
+        "gql": "direct",
+        "a11y": "direct_with_context",
+        "test": "direct",
+        "ds": "direct_with_context",
+        "perf": "direct",
+        "lead": "none",
+        "aws": "none",
+        "docker": "skills_list",
+        "next": "none"
+      }
+    },
+    {
+      "id": "keyword_stuffer",
+      "label": "no",
+      "note": "Lists every keyword, describes no work",
+      "evidence": {
+        "react": "skills_list",
+        "ts": "skills_list",
+        "exp": "none",
+        "gql": "skills_list",
+        "a11y": "skills_list",
+        "test": "skills_list",
+        "ds": "skills_list",
+        "perf": "skills_list",
+        "lead": "skills_list",
+        "aws": "skills_list",
+        "docker": "skills_list",
+        "next": "skills_list"
+      }
+    },
+    {
+      "id": "nice_to_have_loaded",
+      "label": "no",
+      "note": "Loaded with extras, missing mandatories",
+      "evidence": {
+        "react": "direct_with_context",
+        "ts": "direct_with_context",
+        "exp": "direct_with_context",
+        "gql": "none",
+        "a11y": "none",
+        "test": "direct_with_context",
+        "ds": "direct_with_context",
+        "perf": "direct_with_context",
+        "lead": "direct_with_context",
+        "aws": "direct_with_context",
+        "docker": "direct_with_context",
+        "next": "direct_with_context"
+      }
+    },
+    {
+      "id": "hedged_claims",
+      "label": "no",
+      "note": "'Familiar with' everything",
+      "evidence": {
+        "react": "hedged",
+        "ts": "hedged",
+        "exp": "hedged",
+        "gql": "hedged",
+        "a11y": "hedged",
+        "test": "hedged",
+        "ds": "hedged",
+        "perf": "hedged",
+        "lead": "hedged",
+        "aws": "none",
+        "docker": "none",
+        "next": "none"
+      }
+    },
+    {
+      "id": "david_kim",
+      "label": "no",
+      "note": "Multiple gaps",
+      "evidence": {
+        "react": "direct_with_context",
+        "ts": "direct",
+        "exp": "direct",
+        "gql": "none",
+        "a11y": "none",
+        "test": "hedged",
+        "ds": "direct",
+        "perf": "direct",
+        "lead": "hedged",
+        "aws": "direct",
+        "docker": "none",
+        "next": "direct_with_context"
+      }
+    },
+    {
+      "id": "elena_popov",
+      "label": "no",
+      "note": "Junior against a senior role",
+      "evidence": {
+        "react": "direct",
+        "ts": "none",
+        "exp": "hedged",
+        "gql": "none",
+        "a11y": "hedged",
+        "test": "none",
+        "ds": "direct",
+        "perf": "direct",
+        "lead": "none",
+        "aws": "none",
+        "docker": "none",
+        "next": "direct"
+      }
+    },
+    {
+      "id": "james_turner",
+      "label": "no",
+      "note": "Early career",
+      "evidence": {
+        "react": "direct",
+        "ts": "hedged",
+        "exp": "none",
+        "gql": "none",
+        "a11y": "none",
+        "test": "none",
+        "ds": "none",
+        "perf": "none",
+        "lead": "none",
+        "aws": "none",
+        "docker": "none",
+        "next": "direct"
+      }
+    },
+    {
+      "id": "proxy_only",
+      "label": "no",
+      "note": "Proxies only; no direct evidence",
+      "evidence": {
+        "react": "strong_proxy",
+        "ts": "skills_list",
+        "exp": "direct",
+        "gql": "strong_proxy",
+        "a11y": "none",
+        "test": "strong_proxy",
+        "ds": "strong_proxy",
+        "perf": "none",
+        "lead": "none",
+        "aws": "none",
+        "docker": "none",
+        "next": "direct_with_context"
+      }
+    }
+  ]
+}

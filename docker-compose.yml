@@ -1,0 +1,122 @@
+# Local development stack.
+#
+# The browser talks only to the frontend and the API. Postgres, Redis, MinIO,
+# and the Anthropic API are reachable from the backend and worker only — the
+# model API key never leaves the server side.
+
+name: resumeiq
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: resumeiq
+      POSTGRES_PASSWORD: resumeiq
+      POSTGRES_DB: resumeiq
+    ports: ["5432:5432"]
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resumeiq"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports: ["6381:6379"]
+    volumes: ["redis-data:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports: ["9000:9000", "9001:9001"]
+    volumes: ["minio-data:/data"]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 6s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://resumeiq:resumeiq@postgres:5432/resumeiq
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT: http://minio:9000
+    ports: ["8000:8000"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      minio: {condition: service_started}
+      clamav: {condition: service_started}
+    volumes: ["./backend:/app"]
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://resumeiq:resumeiq@postgres:5432/resumeiq
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT: http://minio:9000
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    volumes:
+      - "./backend:/app"
+      - "model-cache:/home/app/.cache"   # keeps the embedding model between restarts
+    command: arq app.workers.main.WorkerSettings
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    ports: ["5173:5173"]
+    volumes:
+      - "./frontend:/app"
+      - "/app/node_modules"
+    environment:
+      # Reached by the browser, so this is a host address.
+      VITE_API_BASE: http://localhost:8000/api
+      # Reached by the Vite dev server inside the container, so this is the
+      # compose service name. Used by the /api proxy for same-origin requests
+      # such as file downloads.
+      VITE_PROXY_TARGET: http://backend:8000
+    depends_on: [backend]
+    command: npm run dev -- --host 0.0.0.0
+
+  clamav:
+    image: clamav/clamav:1.4
+    # Signature database is ~1 GB and downloads on first start; the volume keeps
+    # it between restarts. Expect ~3 minutes before the first scan succeeds.
+    volumes: ["clamav-db:/var/lib/clamav"]
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --ping 1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+
+volumes:
+  clamav-db:
+  postgres-data:
+  redis-data:
+  minio-data:
+  model-cache:
