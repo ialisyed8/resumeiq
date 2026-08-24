@@ -1,265 +1,178 @@
-# ResumeIQ
+# AutoGuard AI
 
-A resume screening system that ranks candidates against a job description and
-shows its working — every verdict traces to a quoted line from the resume, and
-every gap states what was searched for and not found.
+Autonomous incident diagnosis and remediation, built to run on a single
+free-tier ARM64 VM under a $0/month infrastructure constraint, with a four-zone
+trust model that keeps the reasoning tier structurally incapable of touching
+production.
 
-Built to explore a specific question: **can an AI screening tool be made
-defensible enough that a recruiter could justify a rejection to the candidate?**
-
-Most of what follows is about where it failed and what that taught me. The stack
-is at the bottom, where it belongs.
-
----
-
-## The bug that mattered most
-
-Two days before I stopped work on this, I was reading through a candidate report
-and found this:
-
-> **CI/CD security, vulnerability management, and incident response**
-> *No evidence found* — "No mention of CI/CD security, vulnerability management,
-> incident response, or security incident handling found in the submitted resume."
-
-Two lines below it, on the same page, the system quoted her resume as evidence
-for a different requirement:
-
-> *"Cloud security engineer with 5+ years... partnering with DevOps teams on
-> identity, logging, **vulnerability management, and incident response**."*
-
-The system asserted a phrase was absent from a document, then quoted the phrase
-from that document. Its own report disproved it.
-
-### Why it happened
-
-The verifier only ever sees *retrieved chunks*, not the whole resume. So when it
-reports "not found", the honest reading is "not found in what I was shown". The
-code rendered that as "no mention in the submitted resume", which claims far
-more than the system knows.
-
-### Why it took four attempts to fix
-
-Absence claims were emitted from four independent places, and each fix looked
-correct until a real document took a different route:
-
-| # | Path | Why it was missed |
-|---|---|---|
-| 1 | `ground_verdict` | The obvious one — LLM output handling |
-| 2 | `_no_evidence` | Fires when retrieval returns nothing; bypasses layer 1 entirely |
-| 3 | `deterministic_pass` | The alias layer. Checked a *curated skill dictionary*, never the requirement's own extracted aliases — then returned `confidence=0.9` on a claim it had no basis for. Its comment read "genuinely absent across every alias" and was wrong. |
-| 4 | The database column | The UI renders `absence_statement`, which regenerated the claim from scratch and discarded whatever the grader had reasoned |
-
-Path 3 is the one I think about. Confidently wrong is worse than uncertain, and
-the comment made the error look considered.
-
-The fix now reports three distinct outcomes where there was one:
-
-- **Genuinely absent** → "No mention of X, Y, or Z found in the submitted resume"
-- **Present but undescribed** → "Mentioned (vulnerability management, incident
-  response) but with no supporting description of the work"
-- **Citation unverifiable** → "The supporting quote could not be verified against
-  the document"
-
-Each is true of what the system actually knows. Tests assert the property at all
-four entry points rather than in one implementation, so a fifth path cannot
-reintroduce it quietly.
+**Status: Phase 0, step P0.1 complete.** The repository skeleton exists and can
+already reject architecture violations. No application logic yet — see
+[Current state](#current-state).
 
 ---
 
-## Three other findings worth reading
+## The one thing to understand first
 
-### A cheaper model silently destroyed the evidence layer
+The reasoning tier — the part that calls an LLM — has **no** production
+execution privilege, directly or indirectly. Not because it is instructed not
+to, but because:
 
-To conserve API budget I switched evidence verification from Sonnet to Haiku.
-A well-qualified candidate went from **4/5 to 0/5**.
+- it runs as its own container image that does not contain a Kubernetes client,
+  a cloud SDK, or the deployment adapter;
+- its ServiceAccount has zero role bindings, so a leaked token authorises
+  nothing;
+- its network policy denies egress to every namespace, to the Kubernetes API and
+  to the instance metadata endpoint, leaving only DNS, an allowlist of inference
+  hosts, Postgres and one queue;
+- its Postgres role can `INSERT` into one table and `SELECT` from one view, and
+  cannot `UPDATE` or `DELETE` anything, anywhere;
+- **zones do not call each other.** There is no endpoint in Zone 3 or Zone 4 for
+  it to reach, forge a request to, or confuse.
 
-The mechanism: every positive verdict must cite text that is then fuzzy-matched
-against the source at 0.88 similarity. Haiku *paraphrases* evidence; Sonnet
-quotes it. All five citations scored 0.40–0.68 and were correctly rejected as
-ungrounded.
+The worst outcome from a fully compromised reasoning tier — including one whose
+prompt has been hijacked by content in a customer's log stream — is a proposal
+that fails deterministic verification, policy evaluation and human approval.
 
-The guard worked exactly as designed. The problem is that the system then
-reported five confident absences and completed normally. A recruiter would have
-rejected a qualified candidate and seen nothing amiss.
-
-**The model choice is not a free cost lever, and it does not degrade
-gracefully — it collapses.** A batch where most verdicts fail grounding should
-fail loudly rather than produce hollow results.
-
-### Requirement structure drives accuracy more than the model does
-
-Same system, same day, two job descriptions:
-
-| | Recall of "strong" in top 10 |
-|---|---|
-| **JD01** — Cloud Security Engineer | **11%** |
-| **JD02** — Full-Stack Engineer | **89%** |
-
-The difference was one requirement. JD01 contained:
-
-> *CI/CD security, vulnerability management, and incident response*
-
-Three separate disciplines in one requirement. It is satisfied by mentioning
-*any* of them convincingly, so it rewards breadth over depth — the exact inverse
-of the judgement a recruiter wants. Eight of nine strong candidates failed on it
-while every medium candidate passed by name-checking all three.
-
-JD02 had seven atomic requirements and near-perfect band separation.
-
-**Accuracy work belongs upstream, in how requirements are structured, not
-downstream in ranking weights.** Weights only reorder candidates *within* a
-coverage tier; all the error was *at* the tier boundary, where weights cannot
-reach.
-
-### Sampling temperature was left at its default
-
-The same job description produced 7, then 5, then 8 requirements across three
-runs — one of them invented from the *Responsibilities* section rather than the
-requirements. `temperature` had never been set, so it defaulted to 1.0.
-
-A ranking someone has to defend cannot rest on a die roll. Set to 0.
+Prompt-injection defense here is architectural, not a prompt technique.
 
 ---
 
-## The design decision the whole thing rests on
+## Trust zones
 
-**Coverage is a gate, not a score.**
+| Zone | What it is | Runtime home | Credentials it holds |
+|---|---|---|---|
+| **1 — Untrusted** | A classification applied to *data*: logs, alerts, telemetry, repository content, user text, and all model output before validation | `svc-api`, `svc-ingest` in `ag-edge` (trusted code, untrusted input) | none for the data; scoped ingest tokens for the receiver |
+| **2 — Reasoning** | Proposes; never acts | `worker-diagnosis` in `ag-reason` | inference API keys only |
+| **3 — Verification** | Deterministic, independent of the model | `worker-verifier` in `ag-verify`, sandbox Jobs in `ag-sandbox` | none in the sandbox; a narrow database role in the verifier |
+| **4 — Execution** | Sole mutation authority | `worker-deployer` in `ag-execute` | target-environment credentials, held nowhere else |
 
-A candidate missing a must-have stays in a lower tier no matter how strong they
-are elsewhere. Ranking weights reorder candidates *within* a tier and can never
-lift one across a boundary.
+Handoff between zones is a Postgres row plus a queue message containing only an
+opaque identifier. Zone 4 treats that identifier as a hint with no authority and
+re-derives every authorization fact — plan digest, cryptographically signed
+approval, approver role, separation of duty, verification result, policy
+decision, safety state, artifact signature — before it acts. Every gate defaults
+to denial; an exception raised anywhere in the sequence is a denial, not a retry.
 
-This is enforced structurally, and 13 tests attack it with extreme weight
-vectors trying to break it. It is the property that makes the output explicable:
-"ranked third because he has eight of nine requirements" is a sentence a
-recruiter can say out loud. "Ranked third, 79% match" is not.
-
-Other decisions that follow from the same principle:
-
-**Evidence is grounded or it is discarded.** A positive verdict whose quote
-cannot be located in the source is downgraded to no-evidence, not accepted with
-a caveat. Fabricated evidence is worse than none because it looks convincing.
-
-**Hedged language is capped.** "Familiar with Kubernetes" cannot exceed 0.2
-regardless of what the model returns. Tested against a resume listing every
-keyword in the job description with no described work — it scored **1/9**.
-
-**Identity is separated by database grant, not convention.** The worker role has
-`INSERT` but no `SELECT` on `candidate_identities`. The scoring pipeline
-physically cannot read a candidate's name. Contact details are extracted by
-regex, never by a model, so identity never enters the AI path at all.
-
-**Unreadable documents are quarantined, not scored low.** A scanned PDF with no
-text layer is held out of the ranking with an explanation, rather than ranked
-last for reasons that look like a judgement about the person.
-
-**No sentiment analysis, no photographs, no institution names, no graduation
-dates.** Each is a protected-characteristic proxy. Employment gaps are measured
-for context and never scored.
+Full detail: [`docs/architecture/`](docs/architecture/) and the Phase 0
+Implementation Readiness Correction.
 
 ---
 
-## What is verified, and what is not
+## Repository layout
 
-I have tried to keep these separate throughout.
-
-### Verified
-
-| | |
-|---|---|
-| Tenant isolation | 18 endpoints, all denied cross-org access including candidate PII, resume documents, and reports |
-| Backup restore | Dump → restore to scratch DB → row counts match across 6 tables |
-| Malware scanning | ClamAV against a live daemon; EICAR detected, signature logged, file content not logged |
-| Rate limiting | Fires at exactly the configured limit under real HTTP traffic |
-| Load | 50 concurrent, 3,948 requests, 0% failures. p95 225ms after fixing a connection-pool bottleneck found by measurement (worst case 5.9s → 2.7s) |
-| Tests | 421 passing, 44 skipped |
-
-### Not verified
-
-**Accuracy on real resumes.** Everything above used synthetic resumes generated
-to fit their labels, which I labelled myself. That measures whether the pipeline
-discriminates. It is not an accuracy claim and I have not made one.
-
-Measuring accuracy properly needs two recruiters independently bucketing real
-resumes against real job descriptions, with inter-rater agreement measured
-first — because where two humans disagree is the ceiling no system beats. The
-protocol is in `docs/ranking.md`.
-
-**End-to-end browser testing, and a soak test.** Neither run.
-
----
-
-## Why there is no live deployment
-
-Processing real candidate data requires a privacy policy, terms of service, and
-a Data Processing Agreement. None exist. Running a public instance where anyone
-can upload a resume would mean handling strangers' personal data with no lawful
-basis — and this is employment decision-making, which sits under GDPR Art. 22,
-NYC Local Law 144, and the EU AI Act.
-
-`docs/privacy-data-flow.md` traces what is stored at every stage, who can read
-it, and which third party sees it. It exists so a lawyer can assess it.
-
-The system is designed for it — retention enforcement, audited deletion,
-append-only audit trail, blind screening by default — but designed-for and
-cleared-for are different things.
-
----
-
-## Running it
-
-```bash
-git clone <repo> && cd resumeiq
-cp .env.example .env          # add ANTHROPIC_API_KEY, generate two secrets
-docker compose up --build     # ~15 min first run
-docker compose exec backend python -m app.seed
+```
+packages/
+  domain/            entities, invariants, state machines, ports — no I/O
+  contracts/         schemas for everything crossing B1/B2/B3
+  platform/          config validation, redaction, logging, safe HTTP, IDs
+  application/       use cases, authorization, transaction boundaries
+  adapters-data/     Postgres, Valkey, outbox queue, object storage
+  adapters-llm/      Groq, Gemini, Ollama, mock, provider router
+  adapters-deploy/   Zone 4 mutation — installed in exactly one image
+apps/
+  api/               Zone 1 exposed control plane
+  web/               Next.js frontend
+services/
+  worker_diagnosis/  Zone 2
+  worker_verifier/   Zone 3
+  worker_deployer/   Zone 4
+  scheduler/         outbox sweeper, retention, safety-state evaluation
+db/ policy/ infra/ tests/ docs/
 ```
 
-http://localhost:5173 — `alex.morgan@northwind.demo` / `demo-password-2025`
-
-Seeded with 8 ranked candidates and 4 quarantined documents. No model calls
-needed to explore it.
-
----
-
-## Architecture
-
-Modular monolith with a worker queue. Deliberately not microservices — nothing
-about this workload justifies the operational cost.
-
-**Matching cascade**, cheapest layer first:
-
-1. **Alias matching** — deterministic, free, resolves most requirements outright
-2. **BM25** — lexical relevance
-3. **Embeddings** — `bge-base-en-v1.5`, runs locally, no embedding API
-4. **LLM adjudication** — Claude, only where the cheap layers leave real ambiguity
-
-The constraint that matters: layers 1–3 can only ever *propose* evidence. Only
-layer 4 issues a verdict, and every verdict must quote text that is then
-verified against the source.
-
-**Stack:** FastAPI · PostgreSQL + pgvector · Redis + arq · React + TypeScript ·
-MinIO/S3 · ClamAV · Docker
-
-**Docs:** [`ranking.md`](docs/ranking.md) · [`security.md`](docs/security.md) ·
-[`privacy-data-flow.md`](docs/privacy-data-flow.md) ·
-[`performance-baseline.md`](docs/performance-baseline.md) ·
-[`disaster-recovery.md`](docs/disaster-recovery.md)
+Adapters are split into three separate distributions on purpose. It means the
+reasoning image's dependency resolution *cannot* pull in a Kubernetes client and
+the deployer's *cannot* pull in an inference SDK — zone separation as a property
+of the lockfile rather than of developer discipline. See
+[ADR-0001](docs/adr/0001-monorepo-layout.md).
 
 ---
 
-## What I would do next
+## Quickstart
 
-1. **Compound-requirement detection** — warn at extraction when a requirement
-   bundles separate disciplines, and let the recruiter decide whether to split.
-   Highest-value accuracy work available, and it needs no model.
-2. **A real evaluation** — two recruiters, thirty resumes, agreement measured
-   before anything else.
-3. **Fail loudly on grounding collapse** — a batch where most citations fail
-   validation should error, not complete.
-4. **Legal review** before any real data touches it.
+Requires Python 3.12, [uv](https://docs.astral.sh/uv/), and Node 20+ for the
+frontend.
+
+```bash
+make install     # workspace + dev tooling
+make hooks       # git hooks (secret scanning, architecture contracts)
+make check       # lint, types, architecture contracts, tests
+```
+
+`make help` lists every target. CI calls the same targets, so "passes locally"
+and "passes in CI" mean the same thing.
+
+### What `make check` does not cover
+
+Three gates cannot run on a developer machine, and a green `make check` does not
+mean the trust boundaries are enforced:
+
+| Gate | Why it needs more than a laptop |
+|---|---|
+| ARM64 runtime gate | verifies images **start**, import every compiled dependency, and run their tests on native arm64. A successful `buildx` proves nothing about whether the binary runs. |
+| Cluster security suite | zone attestation, secret scoping, sandbox contract and B3 forgery tests need a real cluster with NetworkPolicy and admission control. |
+| Integration suite | role privileges, RLS and outbox recovery need real Postgres and Valkey. |
+
+Docker Compose has no NetworkPolicy, no Pod Security admission and no
+ValidatingAdmissionPolicy. It reproduces the container, network and credential
+separation faithfully — including per-zone Postgres roles, so `ag_reason`
+genuinely cannot write `approvals` on a laptop — but the three controls above
+are verified only against a real cluster in CI. Treating Compose as proof of
+isolation would be exactly the mistake this design exists to avoid.
 
 ---
 
-*Job descriptions and resumes used in testing are synthetic, created for
-evaluation. No real candidate data was processed.*
+## Security invariants
+
+These hold at every commit. Each is enforced at runtime and tested, not merely
+documented.
+
+1. Postgres is authoritative. Valkey is disposable: flushing it entirely loses no
+   work, because the sweeper rebuilds the queue from `work_items`.
+2. Zone 2 holds no credential capable of mutating anything.
+3. Only `worker-deployer` holds target-environment credentials, and it listens on
+   no port.
+4. Approval is a signed, digest-bound record verified by Zone 4 — never a
+   boolean, never a client-supplied field. A plan edited after approval fails the
+   digest check.
+5. The sandbox is airgapped: no network, no DNS, no service-account token, no
+   secrets, hard resource limits, one run per pod.
+6. The Docker socket is never mounted anywhere.
+7. Every production mutation is preceded by a committed audit event. If the audit
+   write fails, the mutation does not happen.
+8. Every gate fails closed. Missing input, timeout and exception all mean deny.
+9. `audit_events` and `approvals` reject `UPDATE` and `DELETE` at the database.
+10. No default path requires a payment method on file.
+
+---
+
+## Current state
+
+Step **P0.1 — repository skeleton and enforcement scaffolding** is complete:
+workspace and package manifests, architecture contracts with negative controls
+proving they fire, hooks, ignore rules, the single-entry-point Makefile, and the
+eight decision records.
+
+Every package currently contains only its `__init__` and a docstring naming the
+step that populates it. This is deliberate: the enforcement scaffolding is built
+before the code it constrains, so no module is ever written against an
+unenforced boundary.
+
+Next: **P0.2 — platform and configuration**, starting with fail-closed startup
+validation, so that nothing can start misconfigured before anything exists to
+misconfigure.
+
+---
+
+## Decision records
+
+| ADR | Decision |
+|---|---|
+| [0001](docs/adr/0001-monorepo-layout.md) | Monorepo split by trust zone, not by technology |
+| [0002](docs/adr/0002-runtime-zone-isolation.md) | Zones are runtime deployables; build-time rules are never sufficient |
+| [0003](docs/adr/0003-transactional-outbox-queue.md) | Postgres owns the work list; the queue is a signal |
+| [0004](docs/adr/0004-valkey-over-redis.md) | Valkey for the self-hosted cache |
+| [0005](docs/adr/0005-opentofu-over-terraform.md) | OpenTofu for infrastructure as code |
+| [0006](docs/adr/0006-flux-pull-based-delivery.md) | Pull-based GitOps; no inbound path to Zone 4 |
+| [0007](docs/adr/0007-sandbox-runtime-baseline.md) | Hardened-runc baseline mandatory; gVisor additive |
+| [0008](docs/adr/0008-local-object-storage-default.md) | Local capped object storage by default |
