@@ -21,9 +21,9 @@ import os
 import uuid
 
 import email_validator
-email_validator.TEST_ENVIRONMENT = True
-
 import pytest
+
+email_validator.TEST_ENVIRONMENT = True
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 
