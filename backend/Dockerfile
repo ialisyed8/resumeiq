@@ -25,12 +25,13 @@ ENV PYTHONUNBUFFERED=1 \
 #   libreoffice-writer  — converts .doc/.odt/.rtf/.pages to PDF
 #   tesseract-ocr       — OCR for scanned documents
 #   libgl1/libglib      — OpenCV preprocessing
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
       libpq5 \
       tesseract-ocr tesseract-ocr-eng \
       libreoffice-writer \
       libgl1 libglib2.0-0 \
       curl \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd --create-home --uid 10001 app
