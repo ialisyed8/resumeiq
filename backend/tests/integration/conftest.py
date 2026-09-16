@@ -20,6 +20,9 @@ from __future__ import annotations
 import os
 import uuid
 
+import email_validator
+email_validator.TEST_ENVIRONMENT = True
+
 import pytest
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
