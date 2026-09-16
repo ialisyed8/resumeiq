@@ -35,6 +35,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy import (
     Enum as _SAEnum,
@@ -199,7 +200,7 @@ class User(Base, TimestampMixin):
     __tablename__ = "users"
     __table_args__ = (
         UniqueConstraint("organization_id", "email", name="uq_user_org_email"),
-        Index("ix_users_email_lower", func.lower(String("email"))),
+        Index("ix_users_email_lower", text("lower(email)")),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
