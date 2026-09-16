@@ -43,7 +43,6 @@ jobs:
       ANTHROPIC_API_KEY: ""
       SECRET_KEY: ci-only-secret-key-not-used-anywhere-else-0123456789
       JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else-9876543210
-      AUTH_RATE_LIMIT_PER_MINUTE: "10000"
 
     steps:
       - uses: actions/checkout@v4

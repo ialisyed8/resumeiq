@@ -59,8 +59,6 @@ limiter = RateLimiter()
 
 
 async def limit_requests(key: str, limit: int | None = None) -> None:
-    if settings.APP_ENV == "test":
-        return
     await limiter.check(key, limit or settings.RATE_LIMIT_PER_MINUTE)
 
 
