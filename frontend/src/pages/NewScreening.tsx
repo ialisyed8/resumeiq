@@ -308,7 +308,6 @@ function StepUpload({ jobId, onBack, onStarted }: {
 }) {
   const { toast } = useToast()
   const inputRef = useRef<HTMLInputElement>(null)
-  const [files, setFiles] = useState<File[]>([])
   const [uploaded, setUploaded] = useState<{ filename: string; ok: boolean; reason?: string }[]>([])
   const [busy, setBusy] = useState(false)
   const [over, setOver] = useState(false)
@@ -335,7 +334,7 @@ function StepUpload({ jobId, onBack, onStarted }: {
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Upload failed.', 'bad')
     } finally {
-      setBusy(false); setFiles([])
+      setBusy(false)
     }
   }
 

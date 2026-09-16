@@ -47,7 +47,7 @@ export default function Reports() {
    * matches how revealing identity works elsewhere in the app, and the backend
    * records which of the two was used.
    */
-  const exportCsv = (withNames: boolean) => {
+  const exportCsv = (withNames: boolean = false) => {
     const base = import.meta.env.VITE_API_BASE ?? '/api'
     const query = withNames ? '?blind=false' : ''
     window.open(`${base}/screenings/${effectiveId}/export/csv${query}`, '_blank')
@@ -69,21 +69,23 @@ export default function Reports() {
   }
 
   return (
-    <div className="wrap page">
-      <div className="ph">
-        <div className="ph-top">
-          <div>
-            <h1>Reports</h1>
-            <p className="ph-sub">Summary, requirement breakdown, and recruiter decisions.</p>
-          </div>
-          <div className="ph-actions">
+    <div>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Reports &amp; Analytics</h1>
+          <p className="page-subtitle">
+            Disparate impact analysis, score distributions, and requirement coverage.
+          </p>
+        </div>
+        <div className="page-actions">
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <select className="select" style={{ width: 260 }}
               value={effectiveId} onChange={(e) => setScreeningId(e.target.value)}>
               {list.items.map((s) => (
                 <option key={s.id} value={s.id}>{s.job_title} — {s.name}</option>
               ))}
             </select>
-            <Button onClick={exportCsv}>Export CSV</Button>
+            <Button onClick={() => exportCsv(false)}>Export CSV</Button>
             <Button onClick={() => exportCsv(true)}>Export with names</Button>
           </div>
         </div>

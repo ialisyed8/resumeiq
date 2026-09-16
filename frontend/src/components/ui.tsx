@@ -32,10 +32,10 @@ export function Button({
   return <button className={classes} {...rest}>{children}</button>
 }
 
-export function Card({ children, pad, className = '' }: {
-  children: ReactNode; pad?: boolean; className?: string
+export function Card({ children, pad, className = '', style }: {
+  children: ReactNode; pad?: boolean; className?: string; style?: React.CSSProperties
 }) {
-  return <div className={`card ${pad ? 'card-pad' : ''} ${className}`}>{children}</div>
+  return <div className={`card ${pad ? 'card-pad' : ''} ${className}`} style={style}>{children}</div>
 }
 
 export function Badge({ tone = 'slate', children }: {
