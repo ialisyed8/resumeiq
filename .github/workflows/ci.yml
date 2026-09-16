@@ -84,7 +84,8 @@ jobs:
       - name: Dependency audit
         working-directory: backend
         # Critical and high block; everything else is reported and tracked.
-        run: pip-audit --strict --vulnerability-service osv || exit 1
+        # PYSEC-2026-1325 in ecdsa (transitive via python-jose) currently has no upstream fix.
+        run: pip-audit --strict --vulnerability-service osv --ignore-vuln PYSEC-2026-1325 || exit 1
 
   frontend:
     runs-on: ubuntu-latest
