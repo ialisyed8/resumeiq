@@ -49,6 +49,8 @@ services:
 
   worker:
     build: {context: ./backend, dockerfile: Dockerfile}
+    healthcheck:
+      disable: true
     env_file: [.env]
     environment:
       APP_ENV: production

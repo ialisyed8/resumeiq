@@ -70,6 +70,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    healthcheck:
+      disable: true
     env_file: [.env]
     environment:
       DATABASE_URL: postgresql+asyncpg://resumeiq:resumeiq@postgres:5432/resumeiq
