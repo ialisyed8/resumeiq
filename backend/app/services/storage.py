@@ -12,7 +12,7 @@ import mimetypes
 import re
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import PurePosixPath
 
 from app.core.config import settings
@@ -141,7 +141,7 @@ def content_hash(content: bytes) -> str:
 
 def build_key(org_id: str, filename: str) -> str:
     """Randomised, tenant-scoped storage key. Not derived from user input."""
-    today = datetime.now(timezone.utc).strftime("%Y/%m/%d")
+    today = datetime.now(UTC).strftime("%Y/%m/%d")
     suffix = PurePosixPath(sanitise_filename(filename)).suffix.lower()
     return f"orgs/{org_id}/resumes/{today}/{uuid.uuid4().hex}{suffix}"
 
@@ -172,7 +172,7 @@ class ObjectStorage:
         client = self._s3()
         try:
             client.head_bucket(Bucket=settings.S3_BUCKET)
-        except Exception:  # noqa: BLE001
+        except Exception:
             client.create_bucket(Bucket=settings.S3_BUCKET)
             logger.info("bucket_created", bucket=settings.S3_BUCKET)
 

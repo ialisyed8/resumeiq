@@ -5,15 +5,20 @@ These are cost controls, so the tests are written from the attacker's side:
 can a user get more than their allowance by trying harder, waiting differently,
 or coming back from another tab?
 """
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
-from app.core.limits import (
-    BudgetExceededError, BudgetStatus, PlanLimits, TIER_LIMITS, Tier,
-    enforce_rate_limit, month_start,
-)
 from app.core.errors import RateLimitError
+from app.core.limits import (
+    TIER_LIMITS,
+    BudgetExceededError,
+    BudgetStatus,
+    PlanLimits,
+    Tier,
+    enforce_rate_limit,
+    month_start,
+)
 
 
 class TestTierConfiguration:
@@ -140,7 +145,7 @@ class TestBudgetStatus:
 
 class TestMonthWindow:
     def test_starts_at_first_of_month_midnight(self):
-        start = month_start(datetime(2026, 8, 15, 13, 47, tzinfo=timezone.utc))
+        start = month_start(datetime(2026, 8, 15, 13, 47, tzinfo=UTC))
         assert (start.day, start.hour, start.minute) == (1, 0, 0)
         assert start.month == 8
 

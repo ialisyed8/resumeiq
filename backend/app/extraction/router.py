@@ -7,7 +7,9 @@ from pathlib import Path
 
 from app.core.config import settings
 from app.core.logging import get_logger
-from app.extraction import convert, docx as docx_mod, ocr, pdf as pdf_mod
+from app.extraction import convert, ocr
+from app.extraction import docx as docx_mod
+from app.extraction import pdf as pdf_mod
 from app.extraction.quality import QualityReport, QualityVerdict, assess
 
 logger = get_logger(__name__)
@@ -79,7 +81,7 @@ async def extract_document(path: str, filename: str) -> ExtractionResult:
                     page_breaks=ocr_result.page_breaks,
                     method=f"ocr_{ocr_result.engine}", quality=quality,
                 )
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.error("ocr_failed", filename=filename, error=str(exc))
                 quality = QualityReport(
                     verdict=QualityVerdict.NEEDS_REVIEW, confidence=0.0,

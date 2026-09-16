@@ -20,17 +20,31 @@ from __future__ import annotations
 
 import enum
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
-    Boolean, CheckConstraint, DateTime, Enum as _SAEnum, Float, ForeignKey,
-    Index, Integer, String, Text, UniqueConstraint, func,
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID as PGUUID
+from sqlalchemy import (
+    Enum as _SAEnum,
+)
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from app.core.config import settings as app_settings
+
 
 def SAEnum(enum_cls, **kwargs):
     """
@@ -54,7 +68,7 @@ def _uuid_pk() -> Mapped[uuid.UUID]:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class TimestampMixin:
@@ -178,7 +192,7 @@ class Organization(Base, TimestampMixin):
         Boolean, default=True, nullable=False
     )
 
-    users: Mapped[list["User"]] = relationship(back_populates="organization")
+    users: Mapped[list[User]] = relationship(back_populates="organization")
 
 
 class User(Base, TimestampMixin):
@@ -261,7 +275,7 @@ class JobDescription(Base, TimestampMixin):
     )
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    requirements: Mapped[list["Requirement"]] = relationship(
+    requirements: Mapped[list[Requirement]] = relationship(
         back_populates="job", cascade="all, delete-orphan",
         order_by="Requirement.display_order",
     )
@@ -337,10 +351,10 @@ class Candidate(Base, TimestampMixin):
     decision_status: Mapped[str] = mapped_column(String(32), default="new", nullable=False)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
 
-    identity: Mapped["CandidateIdentity | None"] = relationship(
+    identity: Mapped[CandidateIdentity | None] = relationship(
         back_populates="candidate", cascade="all, delete-orphan", uselist=False
     )
-    documents: Mapped[list["ResumeDocument"]] = relationship(
+    documents: Mapped[list[ResumeDocument]] = relationship(
         back_populates="candidate", cascade="all, delete-orphan"
     )
 
@@ -412,7 +426,7 @@ class ResumeDocument(Base, TimestampMixin):
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     candidate: Mapped[Candidate] = relationship(back_populates="documents")
-    chunks: Mapped[list["ResumeChunk"]] = relationship(
+    chunks: Mapped[list[ResumeChunk]] = relationship(
         back_populates="document", cascade="all, delete-orphan"
     )
 
@@ -694,11 +708,33 @@ class AuditLog(Base):
 
 
 __all__ = [
-    "Base", "Organization", "User", "RefreshToken", "PasswordResetToken",
-    "JobDescription", "Requirement", "Candidate", "CandidateIdentity",
-    "ResumeDocument", "ResumeChunk", "ScreeningBatch", "RequirementEvidence",
-    "CandidateScore", "ScreeningQuestion", "Decision", "AuditLog",
-    "UserRole", "JobStatus", "RequirementKind", "Necessity", "RequirementWeight",
-    "DocumentStatus", "ExtractionMethod", "BatchStatus", "Verdict",
-    "CoverageTier", "DecisionAction", "MatchMethod",
+    "AuditLog",
+    "Base",
+    "BatchStatus",
+    "Candidate",
+    "CandidateIdentity",
+    "CandidateScore",
+    "CoverageTier",
+    "Decision",
+    "DecisionAction",
+    "DocumentStatus",
+    "ExtractionMethod",
+    "JobDescription",
+    "JobStatus",
+    "MatchMethod",
+    "Necessity",
+    "Organization",
+    "PasswordResetToken",
+    "RefreshToken",
+    "Requirement",
+    "RequirementEvidence",
+    "RequirementKind",
+    "RequirementWeight",
+    "ResumeChunk",
+    "ResumeDocument",
+    "ScreeningBatch",
+    "ScreeningQuestion",
+    "User",
+    "UserRole",
+    "Verdict",
 ]

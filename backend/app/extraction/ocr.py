@@ -68,7 +68,7 @@ def run_tesseract(images: list[bytes]) -> OcrResult:
     for index, raw in enumerate(images):
         try:
             processed = _preprocess(raw)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("ocr_preprocess_failed", page=index + 1, error=str(exc))
             processed = raw  # let Tesseract try the original
 
@@ -77,7 +77,7 @@ def run_tesseract(images: list[bytes]) -> OcrResult:
             output_type=pytesseract.Output.DICT, config="--psm 3",
         )
         words, page_conf = [], []
-        for word, conf in zip(data["text"], data["conf"]):
+        for word, conf in zip(data["text"], data["conf"], strict=False):
             if word.strip():
                 words.append(word)
                 try:
@@ -116,7 +116,7 @@ async def run_vision(images: list[bytes]) -> OcrResult:
     if not client.enabled:
         raise RuntimeError("Vision OCR requires ANTHROPIC_API_KEY")
 
-    anthropic = client._ensure()  # noqa: SLF001 - deliberate internal use
+    anthropic = client._ensure()
     texts: list[str] = []
 
     for image in images[: settings.MAX_RESUME_PAGES]:

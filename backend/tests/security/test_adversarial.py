@@ -8,12 +8,17 @@ documented in the wild.
 import pytest
 
 from app.ai.validation import (
-    blank_invisible, detect_injection, sanitise_for_prompt, validate_evidence,
+    detect_injection,
+    sanitise_for_prompt,
+    validate_evidence,
 )
 from app.extraction.quality import assess, detect_hidden_text
 from app.matching.cascade import ChunkRef, RequirementRef, deterministic_pass
 from app.scoring.engine import (
-    CoverageTier, Necessity, RequirementSpec, score_batch,
+    CoverageTier,
+    Necessity,
+    RequirementSpec,
+    score_batch,
 )
 from app.scoring.ladder import EvidenceBand, GradedEvidence, Verdict, grade_for_band
 

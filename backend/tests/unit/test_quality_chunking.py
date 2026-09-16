@@ -1,11 +1,16 @@
 """Quality gate and chunker: the layer that decides what gets screened at all."""
-import pytest
 
 from app.extraction.chunker import (
-    Chunk, chunk_resume, find_sections, page_for_offset,
+    chunk_resume,
+    find_sections,
+    page_for_offset,
 )
 from app.extraction.quality import (
-    QualityVerdict, alpha_ratio, assess, detect_hidden_text, word_ratio,
+    QualityVerdict,
+    alpha_ratio,
+    assess,
+    detect_hidden_text,
+    word_ratio,
 )
 
 GOOD_RESUME = """

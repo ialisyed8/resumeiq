@@ -144,7 +144,7 @@ async def send(message: Email) -> bool:
         await get_backend().send(message)
         logger.info("email_sent", kind=message.kind.value)
         return True
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.error("email_failed", kind=message.kind.value, error=type(exc).__name__)
         return False
 

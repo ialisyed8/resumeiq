@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Request, Response, status
 from pydantic import BaseModel, EmailStr, Field
@@ -14,11 +14,21 @@ from app.core.deps import CurrentUser, DbSession
 from app.core.errors import AuthenticationError, ConflictError, PermissionError_
 from app.core.ratelimit import limit_auth
 from app.core.security import (
-    create_access_token, create_refresh_token, decode_token, generate_reset_token,
-    hash_password, hash_token, validate_password_strength, verify_password,
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    generate_reset_token,
+    hash_password,
+    hash_token,
+    validate_password_strength,
+    verify_password,
 )
 from app.models import (
-    Organization, PasswordResetToken, RefreshToken, User, UserRole,
+    Organization,
+    PasswordResetToken,
+    RefreshToken,
+    User,
+    UserRole,
 )
 from app.services import audit
 
@@ -102,7 +112,7 @@ async def register(payload: RegisterRequest, request: Request, session: DbSessio
         full_name=payload.full_name,
         job_title=payload.job_title,
         role=UserRole.ADMIN,  # first user in an org administers it
-        email_verified_at=datetime.now(timezone.utc),
+        email_verified_at=datetime.now(UTC),
     )
     session.add(user)
     await session.flush()
@@ -133,7 +143,7 @@ async def login(
         select(User).where(func.lower(User.email) == payload.email.lower())
     )
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if user and user.locked_until and user.locked_until > now:
         raise AuthenticationError(
             "This account is temporarily locked after repeated failed attempts. "
@@ -212,14 +222,14 @@ async def refresh_tokens(request: Request, response: Response, session: DbSessio
         raise AuthenticationError("No refresh token supplied.")
 
     try:
-        payload = decode_token(token, expected_type="refresh")
+        decode_token(token, expected_type="refresh")
     except Exception as exc:
         raise AuthenticationError("That session is no longer valid.") from exc
 
     stored = await session.scalar(
         select(RefreshToken).where(RefreshToken.token_hash == hash_token(token))
     )
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if stored is None or stored.expires_at < now:
         raise AuthenticationError("That session has expired. Log in again.")
@@ -269,7 +279,7 @@ async def logout(response: Response, request: Request, session: DbSession, princ
             select(RefreshToken).where(RefreshToken.token_hash == hash_token(token))
         )
         if stored:
-            stored.revoked_at = datetime.now(timezone.utc)
+            stored.revoked_at = datetime.now(UTC)
 
     await audit.record(
         session, organization_id=principal.organization_id,
@@ -296,7 +306,7 @@ async def forgot_password(payload: ForgotRequest, request: Request, session: DbS
         session.add(
             PasswordResetToken(
                 user_id=user.id, token_hash=hashed,
-                expires_at=datetime.now(timezone.utc) + timedelta(minutes=30),
+                expires_at=datetime.now(UTC) + timedelta(minutes=30),
             )
         )
         # Delivery failure must not change the response — see the identical
@@ -328,7 +338,7 @@ async def reset_password(payload: ResetRequest, request: Request, session: DbSes
             PasswordResetToken.token_hash == hash_token(payload.token)
         )
     )
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if stored is None or stored.used_at is not None or stored.expires_at < now:
         raise PermissionError_("That reset link is invalid or has expired.")
 

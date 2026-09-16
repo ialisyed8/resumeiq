@@ -2,8 +2,11 @@
 import pytest
 
 from app.ai.validation import (
-    detect_injection, find_quote, normalise_for_matching, sanitise_for_prompt,
-    strip_invisible, validate_evidence,
+    detect_injection,
+    find_quote,
+    sanitise_for_prompt,
+    strip_invisible,
+    validate_evidence,
 )
 
 SOURCE = (

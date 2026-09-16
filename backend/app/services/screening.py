@@ -18,16 +18,30 @@ from dataclasses import dataclass
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.core.logging import get_logger
 from app.models import (
-    Candidate, CandidateIdentity, CandidateScore as ScoreRow, CoverageTier as TierEnum,
-    Requirement, RequirementEvidence, ResumeDocument, ScreeningBatch,
+    Candidate,
+    CandidateIdentity,
+    Requirement,
+    RequirementEvidence,
+    ResumeDocument,
+    ScreeningBatch,
+)
+from app.models import (
+    CandidateScore as ScoreRow,
+)
+from app.models import (
+    CoverageTier as TierEnum,
 )
 from app.scoring.engine import (
-    SCORER_VERSION, CategoryWeights, Necessity as ScoringNecessity,
-    RequirementSpec, score_batch,
+    SCORER_VERSION,
+    CategoryWeights,
+    RequirementSpec,
+    score_batch,
+)
+from app.scoring.engine import (
+    Necessity as ScoringNecessity,
 )
 from app.scoring.ladder import EvidenceBand, GradedEvidence, Verdict
 

@@ -1,10 +1,12 @@
 """Cascade behaviour: the deterministic layer and verdict grounding."""
 from dataclasses import dataclass
 
-import pytest
-
 from app.matching.cascade import (
-    ChunkRef, RequirementRef, absence_statement, deterministic_pass, ground_verdict,
+    ChunkRef,
+    RequirementRef,
+    absence_statement,
+    deterministic_pass,
+    ground_verdict,
 )
 from app.matching.lexical import BM25, tokenize
 from app.scoring.ladder import EvidenceBand, Verdict

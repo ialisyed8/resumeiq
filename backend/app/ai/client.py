@@ -28,7 +28,10 @@ from pydantic import BaseModel, ValidationError
 
 from app.ai import prompts
 from app.ai.schemas import (
-    JobAnalysis, QuestionSet, ResumeProfile, VerificationBatch,
+    JobAnalysis,
+    QuestionSet,
+    ResumeProfile,
+    VerificationBatch,
 )
 from app.core.config import settings
 from app.core.errors import ConfigurationError, ModelError
@@ -124,7 +127,7 @@ class AnthropicClient:
                     if getattr(block, "type", None) == "text"
                 )
 
-            except Exception as exc:  # noqa: BLE001 - provider exceptions vary
+            except Exception as exc:
                 last_error = exc
                 status = getattr(exc, "status_code", None)
                 retryable = status in RETRYABLE_STATUS or status is None
@@ -257,7 +260,7 @@ class AnthropicClient:
                 cache_system=False,
             )
             return {"configured": True, "reachable": True}
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return {"configured": True, "reachable": False, "detail": str(exc)[:200]}
 
 

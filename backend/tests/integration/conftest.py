@@ -46,6 +46,7 @@ def anyio_backend():
 @pytest.fixture
 async def engine(database_url):
     from sqlalchemy.ext.asyncio import create_async_engine
+
     from app.models import Base
 
     engine = create_async_engine(database_url, poolclass=None)
@@ -93,8 +94,8 @@ async def client(engine, monkeypatch):
                 await s.rollback()
                 raise
 
-    from app.main import app
     from app.db.session import get_session
+    from app.main import app
 
     app.dependency_overrides[get_session] = override_get_session
     async with AsyncClient(

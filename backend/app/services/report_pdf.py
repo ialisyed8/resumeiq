@@ -23,7 +23,7 @@ black boxes. Nothing here needs them.
 from __future__ import annotations
 
 import io
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT
@@ -31,8 +31,14 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import (
-    Flowable, KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer,
-    Table, TableStyle,
+    Flowable,
+    KeepTogether,
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
 )
 
 # Palette lifted from the interface tokens so the report and the screen agree.
@@ -272,7 +278,7 @@ def build_candidate_report(
     gaps = [c for c in musts if c.get("verdict") != "met"]
 
     display_name = detail.get("display_name") or f"Candidate #{detail.get('reference')}"
-    generated = datetime.now(timezone.utc)
+    generated = datetime.now(UTC)
 
     def furniture(canvas, doc):
         """Header rule and footer provenance on every page."""

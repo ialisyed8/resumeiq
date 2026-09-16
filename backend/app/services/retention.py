@@ -19,10 +19,9 @@ Design constraints:
 
 from __future__ import annotations
 
-import uuid
 from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
-from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -64,11 +63,11 @@ class RetentionReport:
 
 
 def cutoff_for(days: int, now: datetime | None = None) -> datetime:
-    return (now or datetime.now(timezone.utc)) - timedelta(days=days)
+    return (now or datetime.now(UTC)) - timedelta(days=days)
 
 
 async def anonymise_candidate(
-    session: AsyncSession, candidate: "Candidate", report: RetentionReport
+    session: AsyncSession, candidate: Candidate, report: RetentionReport
 ) -> None:
     """
     Strip a candidate to the point where they are no longer a person.
@@ -91,7 +90,7 @@ async def anonymise_candidate(
         try:
             storage.delete(document.storage_key)
             report.storage_objects_deleted += 1
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # Do not abort: an object already gone, or a transient storage
             # error, must not block the database side of the erasure.
             report.storage_failures += 1
@@ -112,13 +111,13 @@ async def anonymise_candidate(
 
     candidate.structured_profile = {}
     candidate.current_title = None
-    candidate.deleted_at = candidate.deleted_at or datetime.now(timezone.utc)
+    candidate.deleted_at = candidate.deleted_at or datetime.now(UTC)
     report.candidates_anonymised += 1
 
 
 async def enforce_for_organization(
     session: AsyncSession,
-    organization: "Organization",
+    organization: Organization,
     report: RetentionReport,
     *,
     now: datetime | None = None,
@@ -169,7 +168,7 @@ async def enforce_for_organization(
 
 async def prune_audit_logs(
     session: AsyncSession,
-    organization: "Organization",
+    organization: Organization,
     report: RetentionReport,
     *,
     now: datetime | None = None,
@@ -215,7 +214,7 @@ async def run_retention(
             await enforce_for_organization(session, organization, report, now=now)
             await prune_audit_logs(session, organization, report, now=now)
             await session.flush()
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # One organisation's failure must not stop the rest.
             report.errors.append(f"{organization.id}: {type(exc).__name__}")
             logger.exception("retention_failed", organization=str(organization.id))

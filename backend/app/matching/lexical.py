@@ -8,11 +8,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 TOKEN = re.compile(r"[a-z0-9][a-z0-9+#.]*")
-STOPWORDS = frozenset("""
-a an the and or but if of to in on at for with by from as is are was were be been
-being have has had do does did will would shall should may might can could this
-that these those it its i we you they he she our your their my me us them
-""".split())
+STOPWORDS = frozenset(["a", "an", "the", "and", "or", "but", "if", "of", "to", "in", "on", "at", "for", "with", "by", "from", "as", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had", "do", "does", "did", "will", "would", "shall", "should", "may", "might", "can", "could", "this", "that", "these", "those", "it", "its", "i", "we", "you", "they", "he", "she", "our", "your", "their", "my", "me", "us", "them"])
 
 K1 = 1.5
 B = 0.75
@@ -31,7 +27,7 @@ class BM25:
     _avg_len: float = 0.0
 
     @classmethod
-    def build(cls, texts: list[str]) -> "BM25":
+    def build(cls, texts: list[str]) -> BM25:
         docs = [tokenize(t) for t in texts]
         index = cls(documents=docs)
         for doc in docs:

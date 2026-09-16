@@ -7,8 +7,14 @@ property impossible to regress.
 import pytest
 
 from app.scoring.engine import (
-    BONUS_CAP, CategoryWeights, CoverageTier, Necessity, RequirementSpec,
-    rank_candidates, score_batch, score_candidate, tier_for,
+    BONUS_CAP,
+    CategoryWeights,
+    CoverageTier,
+    Necessity,
+    RequirementSpec,
+    score_batch,
+    score_candidate,
+    tier_for,
 )
 from app.scoring.ladder import EvidenceBand, GradedEvidence, Verdict, grade_for_band
 

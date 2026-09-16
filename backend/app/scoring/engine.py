@@ -23,9 +23,10 @@ drive an interactive weight slider.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Final, Iterable, Sequence
+from typing import Final
 
 from app.scoring.ladder import GradedEvidence, Verdict
 
@@ -115,7 +116,7 @@ class CategoryWeights:
     education: float = 10.0
     certifications: float = 5.0
 
-    def normalised(self) -> "CategoryWeights":
+    def normalised(self) -> CategoryWeights:
         total = (
             self.skills
             + self.experience

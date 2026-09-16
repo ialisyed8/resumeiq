@@ -6,7 +6,11 @@ import pytest
 
 from app.core.errors import UploadError
 from app.services.storage import (
-    build_key, content_hash, sanitise_filename, sniff_mime, validate_upload,
+    build_key,
+    content_hash,
+    sanitise_filename,
+    sniff_mime,
+    validate_upload,
 )
 
 PDF = b"%PDF-1.7\n" + b"x" * 500

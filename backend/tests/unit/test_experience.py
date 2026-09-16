@@ -4,9 +4,17 @@ from datetime import date
 import pytest
 
 from app.scoring.experience import (
-    Interval, RoleExperience, gaps, merge_intervals, meets_duration_requirement,
-    months_between, parse_date_token, parse_range, recency_weight,
-    skill_experience_months, skill_profile, total_experience_years,
+    Interval,
+    RoleExperience,
+    gaps,
+    meets_duration_requirement,
+    merge_intervals,
+    parse_date_token,
+    parse_range,
+    recency_weight,
+    skill_experience_months,
+    skill_profile,
+    total_experience_years,
 )
 
 

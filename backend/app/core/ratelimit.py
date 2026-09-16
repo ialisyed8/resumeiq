@@ -23,7 +23,7 @@ class RateLimiter:
                 self._redis = aioredis.from_url(
                     settings.REDIS_URL, decode_responses=True
                 )
-            except Exception:  # noqa: BLE001
+            except Exception:
                 self._redis = False  # fall back to memory
         return self._redis or None
 
@@ -42,7 +42,7 @@ class RateLimiter:
                 return
             except RateLimitError:
                 raise
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass  # degrade to in-memory rather than failing open entirely
 
         now = time.time()

@@ -24,11 +24,20 @@ from app.core.logging import get_logger
 from app.matching import embeddings as emb
 from app.matching.lexical import BM25
 from app.matching.normalization import (
-    aliases_for, expand_with_implications, find_skills, normalise_skill,
+    aliases_for,
+    expand_with_implications,
+    find_skills,
+    normalise_skill,
 )
 from app.scoring.ladder import (
-    EvidenceBand, GradedEvidence, Verdict, apply_hedge_cap, band_for_grade,
-    grade_for_band, normalise_grade, verdict_for_grade,
+    EvidenceBand,
+    GradedEvidence,
+    Verdict,
+    apply_hedge_cap,
+    band_for_grade,
+    grade_for_band,
+    normalise_grade,
+    verdict_for_grade,
 )
 
 logger = get_logger(__name__)
@@ -242,7 +251,7 @@ async def retrieve(
             similarities.sort(key=lambda x: x[1], reverse=True)
             for position, (chunk, _) in enumerate(similarities[: settings.RETRIEVAL_TOP_K]):
                 scores[chunk.id] = scores.get(chunk.id, 0.0) + 1.0 / (60 + position)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.warning("embedding_retrieval_failed", error=str(exc))
 
     by_id = {c.id: c for c in chunks}

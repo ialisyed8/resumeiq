@@ -15,9 +15,10 @@ caregiving, illness, and immigration status. See docs/security.md.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Final, Iterable, Sequence
+from typing import Final
 
 MONTHS: Final[dict[str, int]] = {
     "jan": 1, "january": 1,
@@ -205,7 +206,7 @@ def gaps(roles: Sequence[RoleExperience], *, min_months: int = 3) -> list[Interv
         [r.interval for r in roles if r.interval is not None]
     )
     found: list[Interval] = []
-    for earlier, later in zip(intervals, intervals[1:]):
+    for earlier, later in zip(intervals, intervals[1:], strict=False):
         if months_between(earlier.end, later.start) >= min_months:
             found.append(Interval(earlier.end, later.start))
     return found

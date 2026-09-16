@@ -21,7 +21,7 @@ Two properties this file exists to guarantee:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 
@@ -33,16 +33,33 @@ from app.db.session import SessionFactory
 from app.extraction.chunker import chunk_resume
 from app.extraction.contact import extract_contact
 from app.extraction.router import extract_document
+from app.matching import embeddings as emb
 from app.matching.cascade import (
-    ChunkRef, RequirementRef, absence_statement, deterministic_pass,
-    ground_verdict, retrieve,
+    ChunkRef,
+    RequirementRef,
+    absence_statement,
+    deterministic_pass,
+    ground_verdict,
+    retrieve,
 )
 from app.matching.lexical import BM25
-from app.matching import embeddings as emb
 from app.models import (
-    BatchStatus, Candidate, CandidateIdentity, DocumentStatus, ExtractionMethod,
-    JobDescription, MatchMethod, Requirement, RequirementEvidence, ResumeChunk,
-    ResumeDocument, ScreeningBatch, ScreeningQuestion, Verdict as VerdictEnum,
+    BatchStatus,
+    Candidate,
+    CandidateIdentity,
+    DocumentStatus,
+    ExtractionMethod,
+    JobDescription,
+    MatchMethod,
+    Requirement,
+    RequirementEvidence,
+    ResumeChunk,
+    ResumeDocument,
+    ScreeningBatch,
+    ScreeningQuestion,
+)
+from app.models import (
+    Verdict as VerdictEnum,
 )
 from app.scoring.experience import RoleExperience, parse_range, total_experience_months
 from app.services import audit
@@ -82,7 +99,7 @@ async def run_screening(batch_id: str) -> dict:
             return {"status": "missing"}
 
         batch.status = BatchStatus.EXTRACTING
-        batch.started_at = datetime.now(timezone.utc)
+        batch.started_at = datetime.now(UTC)
         batch.model_versions = {
             "extraction": settings.ANTHROPIC_EXTRACTION_MODEL,
             "verification": settings.ANTHROPIC_VERIFICATION_MODEL,
@@ -94,7 +111,7 @@ async def run_screening(batch_id: str) -> dict:
         await _extract_stage(batch_id)
         await _match_stage(batch_id)
         await _score_stage(batch_id)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.exception("screening_failed", batch=batch_id)
         async with SessionFactory() as session:
             batch = await session.scalar(
@@ -170,7 +187,7 @@ async def _extract_stage(batch_id: str) -> None:
                 document.extraction_confidence = result.quality.confidence
                 document.quality_signals = result.quality.as_dict()
                 document.extraction_method = EXTRACTION_METHOD_MAP.get(result.method)
-                document.processed_at = datetime.now(timezone.utc)
+                document.processed_at = datetime.now(UTC)
 
                 # White text and micro-fonts are excluded from what we screen.
                 if result.hidden_text:
@@ -240,12 +257,12 @@ async def _extract_stage(batch_id: str) -> None:
                 if chunks:
                     try:
                         vectors = await emb.embed_passages([c.text for c in chunks])
-                    except Exception as exc:  # noqa: BLE001
+                    except Exception as exc:
                         logger.warning("embedding_failed", document=document_id,
                                        error=str(exc)[:200])
                         vectors = [None] * len(chunks)
 
-                for chunk, vector in zip(chunks, vectors or [None] * len(chunks)):
+                for chunk, vector in zip(chunks, vectors or [None] * len(chunks), strict=False):
                     session.add(
                         ResumeChunk(
                             resume_document_id=document.id, chunk_index=chunk.index,
@@ -278,7 +295,7 @@ async def _extract_stage(batch_id: str) -> None:
                 batch.processed_count += 1
                 await session.commit()
 
-            except Exception as exc:  # noqa: BLE001
+            except Exception:
                 logger.exception("document_failed", document=document_id)
                 await session.rollback()
                 async with SessionFactory() as recovery:
@@ -349,7 +366,7 @@ async def _match_stage(batch_id: str) -> None:
     for candidate_id, document_id in work:
         try:
             await _verify_candidate(batch_id, candidate_id, document_id, refs, client)
-        except Exception:  # noqa: BLE001
+        except Exception:
             logger.exception("verification_failed", candidate=candidate_id)
 
 
@@ -579,7 +596,7 @@ async def _generate_questions(batch_id, candidate_id, refs, resolved, client) ->
                     q.requirement_id: (q.question, q.rationale)
                     for q in response.questions
                 }
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 logger.warning("question_generation_failed", error=str(exc)[:200])
 
         for ref in gaps[:8]:
@@ -617,7 +634,7 @@ async def _score_stage(batch_id: str) -> None:
         scores = await rescore(session, batch)
 
         batch.status = BatchStatus.COMPLETED
-        batch.completed_at = datetime.now(timezone.utc)
+        batch.completed_at = datetime.now(UTC)
         await audit.record(
             session, organization_id=batch.organization_id,
             action=audit.Action.SCREENING_COMPLETED, entity_type="screening",

@@ -3,20 +3,25 @@
 from __future__ import annotations
 
 import uuid
+from datetime import UTC
 
 from fastapi import APIRouter, status
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
 from app.ai.client import get_client
-from app.core.deps import AiUser, CurrentUser, DbSession, ReadUser, WriteUser
+from app.core.deps import AiUser, DbSession, ReadUser, WriteUser
 from app.core.errors import NotFoundError
+from app.core.limits import enforce_budget
 from app.matching.normalization import aliases_for, normalise_skill
 from app.models import (
-    JobDescription, JobStatus, Necessity, Requirement, RequirementKind,
+    JobDescription,
+    JobStatus,
+    Necessity,
+    Requirement,
+    RequirementKind,
     RequirementWeight,
 )
-from app.core.limits import enforce_budget
 from app.scoring.engine import CategoryWeights
 from app.services import audit
 
@@ -343,10 +348,10 @@ async def update_weights(
 
 @router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def archive_job(job_id: uuid.UUID, session: DbSession, principal: WriteUser):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     job = await _get_job(session, job_id, principal.organization_id)
-    job.archived_at = datetime.now(timezone.utc)
+    job.archived_at = datetime.now(UTC)
     job.status = JobStatus.ARCHIVED
     await audit.record(
         session, organization_id=principal.organization_id, action="job.archived",

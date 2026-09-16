@@ -15,7 +15,7 @@ import argparse
 import asyncio
 import random
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import delete, select
 
@@ -23,12 +23,32 @@ from app.core.logging import configure_logging, get_logger
 from app.core.security import hash_password
 from app.db.session import SessionFactory
 from app.models import (
-    AuditLog, BatchStatus, Candidate, CandidateIdentity, CandidateScore,
-    CoverageTier, Decision, DecisionAction, DocumentStatus, ExtractionMethod,
-    JobDescription, JobStatus, MatchMethod, Necessity, Organization,
-    Requirement, RequirementEvidence, RequirementKind, RequirementWeight,
-    ResumeChunk, ResumeDocument, ScreeningBatch, ScreeningQuestion, User,
-    UserRole, Verdict,
+    AuditLog,
+    BatchStatus,
+    Candidate,
+    CandidateIdentity,
+    CandidateScore,
+    CoverageTier,
+    Decision,
+    DecisionAction,
+    DocumentStatus,
+    ExtractionMethod,
+    JobDescription,
+    JobStatus,
+    MatchMethod,
+    Necessity,
+    Organization,
+    Requirement,
+    RequirementEvidence,
+    RequirementKind,
+    RequirementWeight,
+    ResumeChunk,
+    ResumeDocument,
+    ScreeningBatch,
+    ScreeningQuestion,
+    User,
+    UserRole,
+    Verdict,
 )
 from app.scoring.engine import SCORER_VERSION, CategoryWeights
 from app.services.questions import fallback_question
@@ -227,7 +247,7 @@ async def seed() -> None:
             organization_id=org.id, email=DEMO_EMAIL,
             password_hash=hash_password(DEMO_PASSWORD),
             full_name="Alex Morgan", job_title="Recruiter", role=UserRole.ADMIN,
-            email_verified_at=datetime.now(timezone.utc),
+            email_verified_at=datetime.now(UTC),
         )
         session.add(user)
         await session.flush()
@@ -266,13 +286,14 @@ async def seed() -> None:
             blind_screening=True,
             model_versions={"note": "seeded demo data — no model calls were made"},
             created_by=user.id,
-            started_at=datetime.now(timezone.utc) - timedelta(hours=2),
-            completed_at=datetime.now(timezone.utc) - timedelta(hours=1, minutes=48),
+            started_at=datetime.now(UTC) - timedelta(hours=2),
+            completed_at=datetime.now(UTC) - timedelta(hours=1, minutes=48),
         )
         session.add(batch)
         await session.flush()
 
-        from app.scoring.engine import Necessity as SN, RequirementSpec, score_batch
+        from app.scoring.engine import Necessity as SN
+        from app.scoring.engine import RequirementSpec, score_batch
         from app.scoring.ladder import EvidenceBand, GradedEvidence
         from app.scoring.ladder import Verdict as LadderVerdict
 
@@ -315,7 +336,7 @@ async def seed() -> None:
                 extracted_text="\n".join(
                     q for _, q in ev_spec.values() if q
                 ) or "Demo resume text.",
-                processed_at=datetime.now(timezone.utc),
+                processed_at=datetime.now(UTC),
             )
             session.add(document)
             await session.flush()

@@ -7,8 +7,14 @@ log, and what must *not* happen in production.
 import pytest
 
 from app.services.email import (
-    ConsoleBackend, Email, EmailKind, MemoryBackend, password_reset_email,
-    send, set_backend, verification_email,
+    ConsoleBackend,
+    Email,
+    EmailKind,
+    MemoryBackend,
+    password_reset_email,
+    send,
+    set_backend,
+    verification_email,
 )
 
 

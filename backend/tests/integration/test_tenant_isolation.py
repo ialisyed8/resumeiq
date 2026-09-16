@@ -97,6 +97,7 @@ class TestScreeningIsolation:
     async def alpha_batch(self, client, two_orgs, alpha_job, session):
         """A batch row created directly — the pipeline is not under test here."""
         import uuid as _uuid
+
         from app.models import ScreeningBatch
         from app.scoring.engine import SCORER_VERSION
 

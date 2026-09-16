@@ -16,9 +16,10 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Final, Iterable
+from typing import Final
 
 #: Canonical skill -> aliases. Extend freely; entries are matched case- and
 #: punctuation-insensitively. Keep the canonical form as the recruiter-facing

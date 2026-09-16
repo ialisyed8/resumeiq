@@ -9,12 +9,16 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
 from app.core.config import settings
-from app.core.deps import CurrentUser, DbSession, UploadUser
+from app.core.deps import DbSession, UploadUser
 from app.core.errors import ConflictError, NotFoundError, UploadError
 from app.models import Candidate, CandidateIdentity, DocumentStatus, JobDescription, ResumeDocument
 from app.services import audit, malware
 from app.services.storage import (
-    build_key, content_hash, sanitise_filename, storage, validate_upload,
+    build_key,
+    content_hash,
+    sanitise_filename,
+    storage,
+    validate_upload,
 )
 
 router = APIRouter(tags=["uploads"])

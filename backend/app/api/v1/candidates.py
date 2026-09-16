@@ -3,19 +3,28 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.core.deps import CurrentUser, DbSession, ReadUser, WriteUser
+from app.core.deps import DbSession, ReadUser, WriteUser
 from app.core.errors import NotFoundError
 from app.models import (
-    Candidate, CandidateIdentity, CandidateScore, Decision, DecisionAction,
-    JobDescription, Requirement, RequirementEvidence, ResumeDocument,
-    ScreeningBatch, ScreeningQuestion, Verdict,
+    Candidate,
+    CandidateIdentity,
+    CandidateScore,
+    Decision,
+    DecisionAction,
+    JobDescription,
+    Requirement,
+    RequirementEvidence,
+    ResumeDocument,
+    ScreeningBatch,
+    ScreeningQuestion,
+    Verdict,
 )
 from app.services import audit
 from app.services.storage import storage
@@ -234,7 +243,7 @@ async def candidate_detail(
             select(CandidateIdentity).where(CandidateIdentity.candidate_id == candidate.id)
         )
         if identity:
-            identity.revealed_at = datetime.now(timezone.utc)
+            identity.revealed_at = datetime.now(UTC)
             identity.revealed_by = principal.user_id
             payload["display_name"] = identity.full_name or payload["display_name"]
             payload["identity"] = {
@@ -373,7 +382,7 @@ async def override_evidence(
 
     row.override_verdict = Verdict(payload.verdict)
     row.override_by = principal.user_id
-    row.override_at = datetime.now(timezone.utc)
+    row.override_at = datetime.now(UTC)
     row.override_reason = payload.reason
 
     await audit.record(
@@ -493,7 +502,7 @@ async def delete_candidate(candidate_id: uuid.UUID, session: DbSession, principa
     for document in documents:
         try:
             storage.delete(document.storage_key)
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass  # storage may already be gone; the row removal is what matters
         await session.delete(document)
 
@@ -503,7 +512,7 @@ async def delete_candidate(candidate_id: uuid.UUID, session: DbSession, principa
     if identity:
         await session.delete(identity)
 
-    candidate.deleted_at = datetime.now(timezone.utc)
+    candidate.deleted_at = datetime.now(UTC)
     candidate.structured_profile = {}
     candidate.current_title = None
 

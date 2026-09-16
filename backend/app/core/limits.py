@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 
 from sqlalchemy import func, select
@@ -112,7 +112,7 @@ class PlanLimits:
     max_candidates_per_screening: int = settings.MAX_CANDIDATES_PER_SCREENING
 
     @classmethod
-    def for_organization(cls, org_settings: dict | None) -> "PlanLimits":
+    def for_organization(cls, org_settings: dict | None) -> PlanLimits:
         plan = (org_settings or {}).get("plan") or {}
         return cls(
             monthly_screenings=int(
@@ -163,7 +163,7 @@ class BudgetStatus:
 
 
 def month_start(now: datetime | None = None) -> datetime:
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 

@@ -5,20 +5,24 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Query, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
-from app.core.deps import AiUser, CurrentUser, DbSession, ReadUser
+from app.core.deps import AiUser, DbSession, ReadUser
 from app.core.errors import ConflictError, NotFoundError
-from app.models import (
-    BatchStatus, Candidate, DocumentStatus, JobDescription, Requirement,
-    ResumeDocument, ScreeningBatch,
-)
 from app.core.limits import enforce_budget, get_budget
+from app.models import (
+    BatchStatus,
+    Candidate,
+    JobDescription,
+    Requirement,
+    ResumeDocument,
+    ScreeningBatch,
+)
 from app.scoring.engine import SCORER_VERSION, CategoryWeights
 from app.services import audit
 from app.services.screening import get_quarantine, get_results, rescore
@@ -104,7 +108,7 @@ async def start_screening(
     batch = ScreeningBatch(
         organization_id=principal.organization_id,
         job_description_id=job_id,
-        name=payload.name or f"{job.title} — {datetime.now(timezone.utc):%d %b %Y}",
+        name=payload.name or f"{job.title} — {datetime.now(UTC):%d %b %Y}",
         status=BatchStatus.QUEUED,
         total_documents=pending,
         scorer_version=SCORER_VERSION,

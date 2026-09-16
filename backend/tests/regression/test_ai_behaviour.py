@@ -16,10 +16,18 @@ from app.extraction.quality import QualityVerdict, assess
 from app.matching.cascade import ChunkRef, RequirementRef, absence_statement, deterministic_pass
 from app.matching.normalization import find_skills, normalise_skill
 from app.scoring.engine import (
-    CoverageTier, Necessity, RequirementSpec, score_batch, score_candidate,
+    CoverageTier,
+    Necessity,
+    RequirementSpec,
+    score_batch,
+    score_candidate,
 )
 from app.scoring.ladder import (
-    EvidenceBand, GradedEvidence, Verdict, apply_hedge_cap, grade_for_band,
+    EvidenceBand,
+    GradedEvidence,
+    Verdict,
+    apply_hedge_cap,
+    grade_for_band,
 )
 
 

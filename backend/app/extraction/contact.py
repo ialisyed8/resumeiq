@@ -52,26 +52,20 @@ NOT_A_NAME = re.compile(
 
 #: Job titles frequently sit on line two. A name should not look like one.
 TITLE_WORDS = frozenset(
-    """engineer developer manager director consultant analyst designer architect
-    specialist lead senior junior principal staff head officer intern associate
-    scientist administrator coordinator executive""".split()
+    ["engineer", "developer", "manager", "director", "consultant", "analyst", "designer", "architect", "specialist", "lead", "senior", "junior", "principal", "staff", "head", "officer", "intern", "associate", "scientist", "administrator", "coordinator", "executive"]
 )
 
 #: Section headings are often two capitalised words and would otherwise pass the
 #: name test — labelling a candidate "Professional Experience" is worse than
 #: failing to find a name at all.
 SECTION_WORDS = frozenset(
-    """experience education skills profile summary projects certifications
-    employment references achievements publications languages interests contact
-    objective technical professional work career qualifications awards training
-    background competencies expertise portfolio accomplishments""".split()
+    ["experience", "education", "skills", "profile", "summary", "projects", "certifications", "employment", "references", "achievements", "publications", "languages", "interests", "contact", "objective", "technical", "professional", "work", "career", "qualifications", "awards", "training", "background", "competencies", "expertise", "portfolio", "accomplishments"]
 )
 
 #: Name particles that are conventionally lowercase. Without these, names such
 #: as "Joris van der Berg" or "Maria da Silva" fail a naive capitalisation test.
 PARTICLES = frozenset(
-    """van der den de di da do dos das del della la le du bin ibn al el von zu
-    ter ten af av mac mc o' st""".split()
+    ["van", "der", "den", "de", "di", "da", "do", "dos", "das", "del", "della", "la", "le", "du", "bin", "ibn", "al", "el", "von", "zu", "ter", "ten", "af", "av", "mac", "mc", "o'", "st"]
 )
 
 
@@ -104,7 +98,7 @@ def _looks_like_a_name(line: str) -> bool:
         return False
 
     # Count capitalisation only among words that are not conventional particles.
-    substantive = [w for w, low in zip(words, lowered) if low not in PARTICLES]
+    substantive = [w for w, low in zip(words, lowered, strict=False) if low not in PARTICLES]
     if len(substantive) < 2:
         return False
     capitalised = sum(1 for w in substantive if w[:1].isupper())

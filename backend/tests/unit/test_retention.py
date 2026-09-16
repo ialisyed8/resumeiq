@@ -8,21 +8,21 @@ needs a real Postgres.
 The property that matters most: a conservative job. Deleting recent data is
 unrecoverable and would be far worse than failing to delete old data.
 """
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from app.services.retention import BATCH_SIZE, RetentionReport, cutoff_for
 
 
 class TestCutoffArithmetic:
     def test_cutoff_is_in_the_past(self):
-        assert cutoff_for(180) < datetime.now(timezone.utc)
+        assert cutoff_for(180) < datetime.now(UTC)
 
     def test_cutoff_matches_the_configured_window(self):
-        now = datetime(2026, 8, 15, tzinfo=timezone.utc)
+        now = datetime(2026, 8, 15, tzinfo=UTC)
         assert cutoff_for(180, now) == now - timedelta(days=180)
 
     def test_shorter_window_deletes_more(self):
-        now = datetime(2026, 8, 15, tzinfo=timezone.utc)
+        now = datetime(2026, 8, 15, tzinfo=UTC)
         assert cutoff_for(30, now) > cutoff_for(365, now)
 
     def test_timezone_aware(self):
@@ -30,7 +30,7 @@ class TestCutoffArithmetic:
 
     def test_zero_days_is_now_not_the_epoch(self):
         """A misconfigured 0 must not be read as 'delete everything ever'."""
-        now = datetime(2026, 8, 15, tzinfo=timezone.utc)
+        now = datetime(2026, 8, 15, tzinfo=UTC)
         assert cutoff_for(0, now) == now
 
 

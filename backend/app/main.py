@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     try:
         from app.services.storage import storage
         storage.ensure_bucket()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.warning("storage_unavailable", error=str(exc)[:200])
 
     yield
@@ -136,7 +136,7 @@ async def health_deep():
         async with SessionFactory() as session:
             await session.execute(text("SELECT 1"))
         checks["database"] = {"ok": True}
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         checks["database"] = {"ok": False, "detail": str(exc)[:160]}
 
     try:
@@ -144,14 +144,14 @@ async def health_deep():
         pool = await get_pool()
         await pool.ping()
         checks["redis"] = {"ok": True}
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         checks["redis"] = {"ok": False, "detail": str(exc)[:160]}
 
     try:
         from app.services.storage import storage
-        storage._s3().head_bucket(Bucket=settings.S3_BUCKET)  # noqa: SLF001
+        storage._s3().head_bucket(Bucket=settings.S3_BUCKET)
         checks["storage"] = {"ok": True}
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         checks["storage"] = {"ok": False, "detail": str(exc)[:160]}
 
     from app.services import malware

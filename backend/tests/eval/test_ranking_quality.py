@@ -11,7 +11,11 @@ import pathlib
 import pytest
 
 from app.scoring.engine import (
-    CategoryWeights, CoverageTier, Necessity, RequirementSpec, score_batch,
+    CategoryWeights,
+    CoverageTier,
+    Necessity,
+    RequirementSpec,
+    score_batch,
 )
 from app.scoring.ladder import EvidenceBand, GradedEvidence, Verdict, grade_for_band
 from tests.eval.metrics import evaluate, extraction_metrics, ndcg_at_k, recall_at_k

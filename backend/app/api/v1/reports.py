@@ -5,18 +5,24 @@ from __future__ import annotations
 import csv
 import io
 import uuid
-from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, or_, select
 
-from app.core.deps import CurrentUser, DbSession, ReadUser
+from app.core.deps import DbSession, ReadUser
 from app.core.errors import NotFoundError
 from app.models import (
-    AuditLog, Candidate, CandidateIdentity, CandidateScore, CoverageTier,
+    AuditLog,
+    Candidate,
+    CandidateIdentity,
+    CandidateScore,
+    CoverageTier,
     JobDescription,
-    JobStatus, Requirement, RequirementEvidence, ScreeningBatch,
+    JobStatus,
+    Requirement,
+    RequirementEvidence,
+    ScreeningBatch,
 )
 from app.services import audit
 

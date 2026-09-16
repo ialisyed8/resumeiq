@@ -54,4 +54,4 @@ async def embed_queries(texts: list[str]) -> list[list[float]]:
 
 def cosine(a: list[float], b: list[float]) -> float:
     """Both vectors are normalised at encode time, so this is a dot product."""
-    return sum(x * y for x, y in zip(a, b))
+    return sum(x * y for x, y in zip(a, b, strict=False))

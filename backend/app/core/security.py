@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from argon2 import PasswordHasher
@@ -60,7 +60,7 @@ def validate_password_strength(password: str) -> list[str]:
 
 
 def _create_token(subject: str, token_type: TokenType, ttl: timedelta, **claims) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "sub": subject,
         "type": token_type,

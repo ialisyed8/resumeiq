@@ -2,8 +2,12 @@
 import pytest
 
 from app.matching.normalization import (
-    aliases_for, canonicalise_text, expand_with_implications, find_skills,
-    normalise_all, normalise_skill,
+    aliases_for,
+    canonicalise_text,
+    expand_with_implications,
+    find_skills,
+    normalise_all,
+    normalise_skill,
 )
 
 

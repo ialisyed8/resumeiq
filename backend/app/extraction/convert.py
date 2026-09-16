@@ -39,7 +39,7 @@ async def to_pdf(source: str, timeout: int = 120) -> str | None:
     )
     try:
         _, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         process.kill()
         logger.error("libreoffice_timeout", source=source)
         return None

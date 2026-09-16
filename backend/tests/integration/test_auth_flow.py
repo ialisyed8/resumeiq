@@ -1,5 +1,4 @@
 """End-to-end auth: registration, login, tenancy isolation, lockout."""
-import pytest
 
 from tests.integration.conftest import requires_db
 

@@ -74,6 +74,7 @@ class TestUploadValidation:
 class TestAuditTrail:
     async def test_job_creation_is_audited(self, client, authed, session):
         from sqlalchemy import select
+
         from app.models import AuditLog
 
         await client.post(
