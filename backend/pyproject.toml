@@ -88,6 +88,8 @@ ignore = [
   "SIM108",
   "SIM115",
   "B007",
+  "UP042",
+  "RUF059",
 ]
 
 [tool.mypy]
